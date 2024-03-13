@@ -1,14 +1,48 @@
-# Project
+# Introduction 
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+ This tool allows users to token-authenticate with a Symbol Server and serve symbol files. 
+ Optionally supports automation & Blob Storage symbol-caching.
+ Supports local users (yourself) and automation with a given ClientId/Secret. Optionally supports a token audience.
 
-As the maintainer of this project, please make a few updates:
+# Getting Started
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+You will need .NET 8 Runtime/SDK in order to code / build / use as a dotnet tool.
+
+- [Install .NET 8 SDK/Runtime Interactively](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+
+OR
+
+- `winget install dotnet-runtime-8`
+- `winget install dotnet-sdk-8`
+
+### Update your Symbol Path:
+
+`SETX _NT_SYMBOL_PATH SRV*http://localhost:XXXX`
+
+### Running the proxy
+
+Authentication as the local user (yourself) takes a few moments sometimes. If the proxy is configured with `IsNoisy = true`, you'll see:
+- `Access token acquired successfully.`
+- `Local Symbol Proxy started at http://localhost:XXXX/`
+
+The proxy is then ready for use and listening for requesting on the port designating in the AppSettings file. 
+
+# AppSettings explained
+
+## Mandatory Settings
+- `SymbolServerURI`: The URI of the symbol server you'd like to use. e.g. https://somesymbolserver.com/
+- `LocalPort`: The local port you'd like to use in your symbol path. e.g. http://localhost:XXXX. Ensure you `.SYMPATH+` this value, or update the _NT_SYMBOL_PATH_ environment variable.
+
+## Optional Settings
+
+- `BlobConnectionString`: A connection string to optionally cache symbols in a Blob Storage account.
+- `BlobContainerName`: The name of the container in the storage account above, which you'd like to cache symbols in.
+- `ClientId`: Used for automation - ClientID of the application you're requesting a token for.
+- `ClientSecret`: Used for automation - ClientSecret of the application you're requesting a token for.
+- `IsNoisy`: Used for local development - 'True' is essentially !symnoisy for the proxy's console window.
+- `SymDownloadRetryCount`: Number of times to retry the symbol server if a symbol isn't found.
+- `TenantId`: Used for automation - TenantID of the application you're requesting a token for.
+- `TokenAudience`: Used for automation - If your endpoint requires a Token Audience for authentication, include that here.
 
 ## Contributing
 

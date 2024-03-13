@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <section name="MandatorySettings">
+    <key name="SymbolServerURI"></key>
+    <key name="LocalPort"></key>
+  </section>
+  <section name="OptionalSettings">
+    <key name="BlobConnectionString"></key>
+    <key name="BlobContainerName"></key>
+    <key name="ClientId"></key>
+    <key name="ClientSecret"></key>
+    <key name="IsNoisy">true</key>
+    <key name="SymDownloadRetryCount"></key>
+    <key name="TokenAudience"></key>
+    <key name="TenantId"></key>
+  </section>
+</configuration>

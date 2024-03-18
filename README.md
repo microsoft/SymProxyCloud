@@ -25,13 +25,13 @@ Authentication as the local user (yourself) takes a few moments sometimes. If th
 - `Access token acquired successfully.`
 - `Local Symbol Proxy started at http://localhost:XXXX/`
 
-The proxy is then ready for use and listening for requesting on the port designating in the AppSettings file. 
+The proxy is then ready for use and listening for requests on the port designated in the AppSettings file. 
 
 # AppSettings explained
 
 ## Mandatory Settings
 - `SymbolServerURI`: The URI of the symbol server you'd like to use. e.g. https://somesymbolserver.com/
-- `LocalPort`: The local port you'd like to use in your symbol path. e.g. http://localhost:XXXX. Ensure you `.SYMPATH+` this value, or update the _NT_SYMBOL_PATH_ environment variable.
+- `LocalPort`: The `http:localhost/` port you'd like to use in your symbol path. e.g. `1234`. Defaults to 5000. Ensure you `.SYMPATH+` this value, or update the _NT_SYMBOL_PATH_ environment variable.
 
 ## Optional Settings
 
@@ -40,9 +40,10 @@ The proxy is then ready for use and listening for requesting on the port designa
 - `ClientId`: Used for automation - ClientID of the application you're requesting a token for.
 - `ClientSecret`: Used for automation - ClientSecret of the application you're requesting a token for.
 - `IsNoisy`: Used for local development - 'True' is essentially !symnoisy for the proxy's console window.
-- `SymDownloadRetryCount`: Number of times to retry the symbol server if a symbol isn't found.
+- `SymDownloadRetryCount`: Number of times to retry the symbol server if a symbol isn't found. Defaults to 2.
 - `TenantId`: Used for automation - TenantID of the application you're requesting a token for.
-- `TokenAudience`: Used for automation - If your endpoint requires a Token Audience for authentication, include that here.
+- `TokenAudience`: If your endpoint requires a [Token Audience](https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation#validate-the-audience) for authentication, include that here. 
+- Please note that if your Symbol Server requires an [Authentication Scope](https://learn.microsoft.com/en-us/entra/identity-platform/scopes-oidc#the-default-scope) besides ./default, you'll need to edit `ProxyHandler.cs` to accommodate.
 
 ## Contributing
 

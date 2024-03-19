@@ -31,7 +31,7 @@ The proxy is then ready for use and listening for requests on the port designate
 
 ## Mandatory Settings
 - `SymbolServerURI`: The URI of the symbol server you'd like to use. e.g. https://somesymbolserver.com/
-- `LocalPort`: The `http:localhost/` port you'd like to use in your symbol path. e.g. `1234`. Defaults to 5000. Ensure you `.SYMPATH+` this value, or update the _NT_SYMBOL_PATH_ environment variable.
+- `LocalPort`: The `http://localhost/` port you'd like to use in your symbol path. e.g. `1234`. Defaults to 5000. Ensure you `.SYMPATH+` this value, or update the _NT_SYMBOL_PATH_ environment variable.
 
 ## Optional Settings
 
@@ -43,7 +43,7 @@ The proxy is then ready for use and listening for requests on the port designate
 - `SymDownloadRetryCount`: Number of times to retry the symbol server if a symbol isn't found. Defaults to 2.
 - `TenantId`: Used for automation - TenantID of the application you're requesting a token for.
 - `TokenAudience`: If your endpoint requires a [Token Audience](https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation#validate-the-audience) for authentication, include that here. 
-- Please note that if your Symbol Server requires an [Authentication Scope](https://learn.microsoft.com/en-us/entra/identity-platform/scopes-oidc#the-default-scope) besides ./default, you'll need to edit `ProxyHandler.cs` to accommodate.
+- Please note that if your Symbol Server requires an [Authentication Scope](https://learn.microsoft.com/en-us/entra/identity-platform/scopes-oidc#the-default-scope) besides `./default`, you'll need to edit `ProxyHandler.cs` to accommodate.
 
 ## Contributing
 

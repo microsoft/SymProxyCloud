@@ -87,11 +87,11 @@ namespace SymProxyCloud
                             {
                                 if (requestHandleSuccess == false)
                                 {
-                                    Console.WriteLine($"Symbol unavailable: {context.Request.Url.ToString().TrimStart(localHostString.ToCharArray())}");
+                                    Console.WriteLine($"Symbol unavailable: {context.Request.Url.PathAndQuery}");
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"Success: {context.Request.Url.ToString().TrimStart(localHostString.ToCharArray())}");
+                                    Console.WriteLine($"Success: {context.Request.Url.PathAndQuery}");
                                 }
                             }
                         }
@@ -106,7 +106,26 @@ namespace SymProxyCloud
             {
                 // Grab Mandatory Settings
                 symbolServerUri = configuration["section:MandatorySettings:key:SymbolServerURI"];
+                if (!string.IsNullOrEmpty(symbolServerUri))
+                {
+                    if (!symbolServerUri.EndsWith('/'))
+                    {
+                        symbolServerUri += '/';
+                    }
+                }
                 localPort = configuration["section:MandatorySettings:key:LocalPort"];
+                if (long.TryParse(localPort, out var port) == false || port < 0)
+                {
+                    Console.WriteLine("Invalid Local Port. Defaulting to 5000");
+                    localPort = "5000";
+                }
+
+                if (string.IsNullOrEmpty(symbolServerUri) || string.IsNullOrEmpty(localPort))
+                {
+                    Console.WriteLine("Required AppSettings empty. Symbol Server URI & Local Port are required values.");
+                    //https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+                    Environment.Exit(87);
+                }
 
                 // Optional Settings
                 blobConnectionString = configuration["section:OptionalSettings:key:BlobConnectionString"];
@@ -115,20 +134,30 @@ namespace SymProxyCloud
                 aadClientSecret = configuration["section:OptionalSettings:key:ClientSecret"];
                 tokenAudience = configuration["section:OptionalSettings:key:TokenAudience"];
                 tenantId = configuration["section:OptionalSettings:key:TenantId"];
-                if (configuration["section:OptionalSettings:key:IsNoisy"].ToLowerInvariant() == "true")
+                if (!string.IsNullOrEmpty(configuration["section:OptionalSettings:key:IsNoisy"]) &&
+                    configuration["section:OptionalSettings:key:IsNoisy"].ToLowerInvariant() == "true")
                 {
                     isNoisy = true;
                 }
-                if(!string.IsNullOrEmpty(configuration["section:OptionalSettings:key:SymDownloadRetryCount"]))
+                if (!string.IsNullOrEmpty(configuration["section:OptionalSettings:key:SymDownloadRetryCount"]) &&
+                                    long.TryParse(configuration["section:OptionalSettings:key:SymDownloadRetryCount"], out long retryCount) && retryCount > 0)
                 {
-                    symDownloadRetryCount = Convert.ToInt64(configuration["section:OptionalSettings:key:SymDownloadRetryCount"]) > 0 ? Convert.ToInt64(configuration["section:OptionalSettings:key:SymDownloadRetryCount"]) : 2;
+                    symDownloadRetryCount = retryCount;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid SymDownloadRetryCount value. Defaulting to 2.");
+                    symDownloadRetryCount = 2;
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 // Unreadable parameter. Log it, and run as default.
-                Console.WriteLine("Symbol Download Retry not a valid Int64 value. Defaulting to 2.");
-                symDownloadRetryCount = 2;
+                Console.WriteLine("Encountered an error when parsing AppSettings.");
+                if (isNoisy)
+                {
+                    Console.WriteLine(e.ToString());
+                }
             }
 
             if (string.IsNullOrEmpty(symbolServerUri) || string.IsNullOrEmpty(localPort))

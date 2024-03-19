@@ -62,82 +62,81 @@ namespace SymProxyCloud
                     {
                         using (var response = await httpClient.SendAsync(hrm, HttpCompletionOption.ResponseHeadersRead))
                         {
-                            if (response == null || !response.IsSuccessStatusCode)
-                            {
-                                i++;
-                            }
-
-                            long fileSizeBytes = response.Content.Headers.ContentLength ?? 0;
-
-                            if (fileSizeBytes > 0)
+                            if (response != null && response.IsSuccessStatusCode)
                             {
 
-                                context.Response.ContentLength64 = fileSizeBytes;
-                                context.Response.ContentType = response.Content.Headers.ContentType.MediaType;
-                                context.Response.SendChunked = response.Headers.TransferEncodingChunked ?? false;
+                                long fileSizeBytes = response.Content.Headers.ContentLength ?? 0;
 
-                                using (var respStream = await response.Content.ReadAsStreamAsync())
+                                if (fileSizeBytes > 0)
                                 {
-                                    if (respStream != null)
+
+                                    context.Response.ContentLength64 = fileSizeBytes;
+                                    context.Response.ContentType = response.Content.Headers.ContentType.MediaType;
+                                    context.Response.SendChunked = response.Headers.TransferEncodingChunked ?? false;
+
+                                    using (var respStream = await response.Content.ReadAsStreamAsync())
                                     {
-
-                                        if (fileSizeBytes <= 2000000000)
+                                        if (respStream != null)
                                         {
-                                            using (var tempStream = new MemoryStream())
+
+                                            if (fileSizeBytes <= 2000000000)
                                             {
-                                                await respStream.CopyToAsync(tempStream);
-                                                await respStream.FlushAsync();
-
-                                                tempStream.Position = 0;
-                                                await tempStream.CopyToAsync(context.Response.OutputStream);
-                                                await tempStream.FlushAsync();
-
-                                                if (!string.IsNullOrEmpty(blobConnectionString))
+                                                using (var tempStream = new MemoryStream())
                                                 {
-                                                    BlobServiceClient blobServiceClient = new BlobServiceClient(blobConnectionString);
-                                                    BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
-                                                    BlobClient blobClient = containerClient.GetBlobClient(symbolPath);
+                                                    await respStream.CopyToAsync(tempStream);
+                                                    await respStream.FlushAsync();
 
-                                                    if (await blobClient.ExistsAsync() == false)
+                                                    tempStream.Position = 0;
+                                                    await tempStream.CopyToAsync(context.Response.OutputStream);
+                                                    await tempStream.FlushAsync();
+
+                                                    if (!string.IsNullOrEmpty(blobConnectionString))
                                                     {
+                                                        BlobServiceClient blobServiceClient = new BlobServiceClient(blobConnectionString);
+                                                        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+                                                        BlobClient blobClient = containerClient.GetBlobClient(symbolPath);
 
-                                                        tempStream.Position = 0;
-                                                        if (noisy == true)
+                                                        if (await blobClient.ExistsAsync() == false)
                                                         {
-                                                            Console.WriteLine($"Cloud Caching {symbolPath}");
+
+                                                            tempStream.Position = 0;
+                                                            if (noisy == true)
+                                                            {
+                                                                Console.WriteLine($"Cloud Caching {symbolPath}");
+                                                            }
+
+                                                            // Cache the symbol in blob storage
+                                                            await blobClient.UploadAsync(tempStream);
+
                                                         }
 
-                                                        // Cache the symbol in blob storage
-                                                        await blobClient.UploadAsync(tempStream);
-
+                                                        return true;
                                                     }
 
-                                                    return true;
                                                 }
-
                                             }
+
+                                            // MemoryStream Max Size == UInt32 max (2GB)
+                                            // Don't cloud-cache if > 2GB, instead serve the symbol directly.
+                                            await respStream.CopyToAsync(context.Response.OutputStream);
+                                            context.Response.StatusCode = (int)response.StatusCode;
+                                            await context.Response.OutputStream.DisposeAsync();
+
+                                            return true;
                                         }
-
-                                        // MemoryStream Max Size == UInt32 max (2GB)
-                                        // Don't cloud-cache if > 2GB, instead serve the symbol directly.
-                                        await respStream.CopyToAsync(context.Response.OutputStream);
-                                        context.Response.StatusCode = (int)response.StatusCode;
-                                        await context.Response.OutputStream.DisposeAsync();
-
-                                        return true;
                                     }
+
+                                    context.Response.StatusCode = (int)HttpStatusCode.InsufficientStorage;
+                                    await context.Response.OutputStream.DisposeAsync();
+
+                                    return false;
                                 }
 
-                                context.Response.StatusCode = (int)HttpStatusCode.InsufficientStorage;
+                                context.Response.StatusCode = (int)HttpStatusCode.LengthRequired;
                                 await context.Response.OutputStream.DisposeAsync();
 
                                 return false;
                             }
-
-                            context.Response.StatusCode = (int)HttpStatusCode.LengthRequired;
-                            await context.Response.OutputStream.DisposeAsync();
-
-                            return false;
 
                         }
                     }

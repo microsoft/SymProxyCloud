@@ -10,7 +10,7 @@
     <key name="ClientId"></key>
     <key name="ClientSecret"></key>
     <key name="IsNoisy">true</key>
-    <key name="SymDownloadRetryCount"></key>
+    <key name="SymDownloadRetryCount">5</key>
     <key name="TokenAudience"></key>
     <key name="TenantId"></key>
   </section>

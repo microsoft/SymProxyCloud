@@ -54,7 +54,6 @@ jobs:
         dotnet-version: '8.x'
 
     - run: dotnet test
-
     - run: dotnet build -c Release
 
     - name: upload artifacts

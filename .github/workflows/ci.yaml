@@ -1,0 +1,79 @@
+name: Build
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+# Elevate GITHUB_TOKEN permissions for dependabot workflows
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions#approve-a-pull-request
+  dependabot:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Enable auto-merge for Dependabot PRs
+        # if: contains(steps.metadata.outputs.dependency-names, 'my-dependency') && steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [ubuntu64, win64]
+        include:
+          - build: ubuntu64
+            os: ubuntu-latest
+            host_target: x86_64-unknown-linux-gnu
+          - build: win64
+            os: windows-latest
+            host_target: x86_64-pc-windows-msvc
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.x'
+
+    - run: dotnet test
+
+    - run: dotnet build -c Release
+
+    - name: upload artifacts
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        # Artifact name
+        name: ${{ matrix.artifact }}
+        # A file, directory or wildcard pattern that describes what to upload
+        path: bin/Release/net8.0
+
+  # fmt:
+  #   name: check formatting
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+
+  #     - uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: '8.x'
+
+  #     - name: Check formatting
+  #       run: dotnet format SymProxyCloud.sln
